@@ -33,6 +33,7 @@ This preset derives from
 [`preset-typescript-base`](https://github.com/shazhou-ww/preset-typescript-base).
 Its `.git-lineage.yaml` records that immediate parent, and `git-lineage update`
 merges future parent changes without discarding package-specific commits.
+This preset documents its own capabilities and does not enumerate descendants.
 
 ## Initialize the metadata
 
