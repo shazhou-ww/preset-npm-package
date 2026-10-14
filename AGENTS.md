@@ -14,12 +14,12 @@
 ## Skills
 
 - Manage project skills with `npx skills`.
-- Keep all project skills under `.agent/skills/<skill-name>/`, with each
-  skill's `SKILL.md` in its directory.
+- Keep all project skills under `.agent/skills/<skill-name>/`, with each skill's
+  `SKILL.md` in its directory.
 
 ## Publishing
 
-- Keep the package private until its metadata and release setup are intentionally
-  configured for publication.
+- Keep the package private until its metadata and release setup are
+  intentionally configured for publication.
 - Follow the Trusted Publishing workflow in `README.md`; do not introduce
   long-lived npm tokens.
