@@ -3,3 +3,6 @@ packages:
 
 config:
   strictPeerDependencies: true
+
+minimumReleaseAgeExclude:
+  - github-ci-verify@0.1.0

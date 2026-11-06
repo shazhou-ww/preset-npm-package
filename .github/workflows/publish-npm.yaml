@@ -20,8 +20,8 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      actions: read
       id-token: write
-
     steps:
       - name: Check out release commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -94,7 +94,7 @@ jobs:
 
       - name: Verify release commit is on main
         run: |
-          if ! git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main; then
+          if ! git merge-base --is-ancestor "$(git rev-parse HEAD)" refs/remotes/origin/main; then
             echo "::error::The release tag must point to a commit reachable from origin/main."
             exit 1
           fi
@@ -113,17 +113,39 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Validate package
-        run: pnpm check
+      - name: Verify exact-commit main CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pnpm exec github-ci-verify \
+            --sha "$(git rev-parse HEAD)" \
+            --branch main \
+            --workflow ci.yaml \
+            --job-name "Release verification (v1)" \
+            --step-name "Confirm required checks succeeded" \
+            --json --summary
+
+      - name: Set temporary dry-run version
+        if: github.event_name == 'workflow_dispatch'
+        run: npm pkg set "version=0.0.0-oidc-dry-run.${GITHUB_RUN_ID}"
+
+      - name: Build and pack package once
+        run: |
+          PACKAGE_TARBALL="$RUNNER_TEMP/release-package.tgz"
+          pnpm pack --out "$PACKAGE_TARBALL"
+          echo "PACKAGE_TARBALL=$PACKAGE_TARBALL" >> "$GITHUB_ENV"
+
+      - name: Validate package artifact
+        run: pnpm exec publint "$PACKAGE_TARBALL"
 
       - name: Publish package
         if: github.event_name == 'push'
         run:
-          npm publish --access public --tag latest
+          npm publish "$PACKAGE_TARBALL" --access public --tag latest
           --registry=https://registry.npmjs.org/ --loglevel=verbose
 
       - name: Validate trusted publishing
         if: github.event_name == 'workflow_dispatch'
-        run: |
-          npm pkg set "version=0.0.0-oidc-dry-run.${GITHUB_RUN_ID}"
-          npm publish --dry-run --access public --tag oidc-dry-run --registry=https://registry.npmjs.org/ --loglevel=verbose
+        run:
+          npm publish "$PACKAGE_TARBALL" --dry-run --access public --tag
+          oidc-dry-run --registry=https://registry.npmjs.org/ --loglevel=verbose
