@@ -40,31 +40,6 @@ jobs:
           node-version: 24.11.1
           cache: pnpm
 
-      - name: Verify exact-commit main CI
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          node --experimental-strip-types --input-type=module <<'NODE'
-          import { execFileSync } from "node:child_process";
-          import { appendFileSync } from "node:fs";
-          import { verifyReleaseCi } from "./.github/scripts/verify-release-ci.ts";
-
-          const evidence = await verifyReleaseCi({
-            apiUrl: process.env.GITHUB_API_URL,
-            repository: process.env.GITHUB_REPOSITORY,
-            sha: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
-            token: process.env.GH_TOKEN,
-          });
-          appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
-            "## Release verification",
-            `- Source SHA: ${evidence.sourceSha}`,
-            `- CI run: ${evidence.runUrl}`,
-            `- Run attempt: ${evidence.runAttempt}`,
-            `- Contract: ${evidence.contract}`,
-            "",
-          ].join("\n"));
-          NODE
-
       - name: Install the trusted publishing client
         run: npm install --global npm@11.21.0
 
@@ -137,6 +112,18 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Verify exact-commit main CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pnpm exec github-ci-verify \
+            --sha "$(git rev-parse HEAD)" \
+            --branch main \
+            --workflow ci.yaml \
+            --job-name "Release verification (v1)" \
+            --step-name "Confirm required checks succeeded" \
+            --json --summary
 
       - name: Set temporary dry-run version
         if: github.event_name == 'workflow_dispatch'

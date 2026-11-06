@@ -126,7 +126,13 @@ the successfully executed **Release verification (v1)** job and verification
 step from that run attempt. Older green runs cannot override newer failures;
 missing, pending, cancelled, skipped, old-contract, or inaccessible evidence
 blocks publication. Validation policy changes must update the versioned
-verification contract in CI and the verifier.
+verification contract in CI and the publish workflow's `--job-name` /
+`--step-name` arguments.
+
+The gate uses the `github-ci-verify` CLI, pinned as a development dependency and
+installed from the frozen lockfile. Its `--json --summary` options emit
+machine-readable evidence and append the successful verification to the Actions
+summary. There is no repository-local copy of the verifier.
 
 Publishing installs locked dependencies, builds once through `prepack`, checks
 the resulting tarball with publint, and publishes that same tarball using
