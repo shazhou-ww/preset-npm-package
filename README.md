@@ -98,7 +98,8 @@ The publish workflow runs for `v*` tags. Before the first release:
    organization or user, repository, `publish-npm.yaml` workflow filename, and
    `npm` environment. Enable both **Allow npm publish** and **Allow npm
    dist-tag**.
-3. Replace all preset metadata and remove the private safeguard.
+3. Replace all preset metadata, remove the private safeguard, and commit those
+   changes to `main`.
 4. Do not create an `NPM_TOKEN` secret or use an OTP. The workflow obtains a
    short-lived credential through GitHub OIDC.
 5. Validate a new or changed Trusted Publisher without publishing:
@@ -107,15 +108,36 @@ The publish workflow runs for `v*` tags. Before the first release:
    gh workflow run publish-npm.yaml --ref main
    ```
 
-   The manual run assigns a temporary prerelease version and performs an npm dry
-   run without changing the package or a dist-tag.
+   Wait for the matching `main` push CI to succeed first. The manual run uses
+   the same CI verification gate, assigns a temporary prerelease version in its
+   checkout, and performs an npm dry run without publishing or changing a
+   dist-tag.
 
 6. Commit the release version to `main`.
-7. Create and push the matching tag, for example `v0.1.0`.
+7. Wait for that exact commit's `main` push CI, including **Release verification
+   (v1)**, to succeed.
+8. Create and push the matching tag, for example `v0.1.0`.
 
 The workflow verifies that the tag matches `package.json`, that the commit is
-reachable from `main`, that the version is not already on npm, and that all
-checks pass before publishing with short-lived OIDC credentials.
+reachable from `main`, and that the version is not already on npm. It reuses the
+latest run of `ci.yaml` for the exact checked-out commit, requiring this
+repository, the `main` branch, the `push` event, a successful completed run, and
+the successfully executed **Release verification (v1)** job and verification
+step from that run attempt. Older green runs cannot override newer failures;
+missing, pending, cancelled, skipped, old-contract, or inaccessible evidence
+blocks publication. Validation policy changes must update the versioned
+verification contract in CI and the verifier.
+
+Publishing installs locked dependencies, builds once through `prepack`, checks
+the resulting tarball with publint, and publishes that same tarball using
+short-lived OIDC credentials. It does not repeat the complete `pnpm check`. The
+release summary records the source SHA, CI run URL, run attempt, and
+verification contract.
+
+If publication is blocked before publishing because CI has not succeeded yet,
+wait for the matching CI and retry the failed release workflow without moving
+the tag. Release tags are immutable. Do not retry an already-successful publish;
+an existing npm version is rejected.
 
 After the first successful OIDC release, set npm package **Publishing access**
 to **Require two-factor authentication and disallow tokens**. Trusted Publishing
