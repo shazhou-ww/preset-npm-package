@@ -375,6 +375,16 @@ describe("release workflow wiring", () => {
     expect(publish).not.toContain("pnpm check");
   });
 
+  it("initializes the artifact path in a step where runner variables exist", () => {
+    expect(publish).not.toContain("${{ runner.temp }}");
+    expect(publish).toContain(
+      '- name: Build and pack package once\n        run: |\n          PACKAGE_TARBALL="$RUNNER_TEMP/release-package.tgz"',
+    );
+    expect(publish).toContain(
+      'echo "PACKAGE_TARBALL=$PACKAGE_TARBALL" >> "$GITHUB_ENV"',
+    );
+  });
+
   it("builds once and validates and publishes the same tarball", () => {
     expect(publish).toContain('pnpm pack --out "$PACKAGE_TARBALL"');
     expect(publish).toContain('pnpm exec publint "$PACKAGE_TARBALL"');

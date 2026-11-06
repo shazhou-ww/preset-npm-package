@@ -22,9 +22,6 @@ jobs:
       contents: read
       actions: read
       id-token: write
-    env:
-      PACKAGE_TARBALL: ${{ runner.temp }}/release-package.tgz
-
     steps:
       - name: Check out release commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -146,7 +143,10 @@ jobs:
         run: npm pkg set "version=0.0.0-oidc-dry-run.${GITHUB_RUN_ID}"
 
       - name: Build and pack package once
-        run: pnpm pack --out "$PACKAGE_TARBALL"
+        run: |
+          PACKAGE_TARBALL="$RUNNER_TEMP/release-package.tgz"
+          pnpm pack --out "$PACKAGE_TARBALL"
+          echo "PACKAGE_TARBALL=$PACKAGE_TARBALL" >> "$GITHUB_ENV"
 
       - name: Validate package artifact
         run: pnpm exec publint "$PACKAGE_TARBALL"
