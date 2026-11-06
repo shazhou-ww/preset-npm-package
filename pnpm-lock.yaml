@@ -20,6 +20,9 @@ importers:
       eslint:
         specifier: ^10.14.0
         version: 10.14.0
+      github-ci-verify:
+        specifier: 0.1.0
+        version: 0.1.0
       globals:
         specifier: ^17.14.0
         version: 17.14.0
@@ -208,7 +211,6 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [ppc64]
     os: [linux]
-    libc: [glibc]
 
   '@rolldown/binding-linux-s390x-gnu@1.2.13':
     resolution: {integrity: sha512-U1BoTHYmlywE2n3HUWjzZ+8EQsKr+OwpxYuDWaubx42tUL8QSL7nOqRz/NVHanibbFP3M1Rxuprz/wNcbMKjqw==}
@@ -222,7 +224,6 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   '@rolldown/binding-linux-x64-musl@1.2.13':
     resolution: {integrity: sha512-W0euZS40U4V6JkmEnVCIX9mcsL6cbXQ4X8c2w+MMOIjFg68TXUW+u3RT+2e1t1pv9mg/EP3pDtK3POXdQ7Rxyw==}
@@ -506,6 +507,11 @@ packages:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+
+  github-ci-verify@0.1.0:
+    resolution: {integrity: sha512-FN9OXcBu9+ZvSnkt5cNIJCEkQQF5Zymvlgc3RFF/fqRfi5AGYYJMJpwwIhy9EKCd99oqR+4zdk0+b9ucYG0vig==}
+    engines: {node: '>=22.13'}
+    hasBin: true
 
   glob-parent@6.0.2:
     resolution: {integrity: sha512-XxwI8EOhVQgWp6iDL+3b0r86f4d6AX6zSU55HfB4ydCEuXLXc5FcYeOu+nnGftS4TEju/11rt4KJPTMgbfmv4A==}
@@ -1342,6 +1348,8 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  github-ci-verify@0.1.0: {}
 
   glob-parent@6.0.2:
     dependencies:
