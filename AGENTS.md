@@ -23,3 +23,5 @@
   intentionally configured for publication.
 - Follow the Trusted Publishing workflow in `README.md`; do not introduce
   long-lived npm tokens.
+- Publish prereleases only to `rc` as `X.Y.Z-rc.n`. For each target version,
+  start `n` at 0 and increment by one; stable releases use `latest`.

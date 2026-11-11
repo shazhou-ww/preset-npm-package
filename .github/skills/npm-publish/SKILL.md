@@ -4,7 +4,7 @@ description:
   "Use when: releasing or publishing this package to npm, choosing or bumping
   its version, creating an npm release tag, monitoring the tag-triggered publish
   workflow, or diagnosing a failed npm release."
-argument-hint: "<stable-semver-version>"
+argument-hint: "<X.Y.Z|X.Y.Z-rc.n>"
 ---
 
 # Publish this package to npm
@@ -17,7 +17,12 @@ Release the package through `.github/workflows/publish-npm.yaml`. A pushed
 - Use the official registry, `https://registry.npmjs.org/`.
 - Publish with GitHub Actions OIDC Trusted Publishing. Never create, request,
   print, store, or use an `NPM_TOKEN`, and never request an OTP.
-- Accept stable SemVer releases only: `X.Y.Z` and tag `vX.Y.Z`.
+- Accept stable SemVer releases `X.Y.Z` and RC prereleases `X.Y.Z-rc.n`, with
+  matching tags `vX.Y.Z` and `vX.Y.Z-rc.n`.
+- Publish stable versions to the `latest` channel and prereleases only to the
+  `rc` channel. An RC release must never change `latest`.
+- For each target `X.Y.Z`, start at `X.Y.Z-rc.0` and increment `n` by one for
+  each subsequent RC. Use non-negative integers without leading zeros.
 - The tag must exactly match `package.json` and point to a commit reachable from
   `origin/main`.
 - Never move, reuse, force-push, or silently delete a release tag.
@@ -68,7 +73,7 @@ Trusted Publishing.
    git fetch origin main --tags
    git log --oneline --decorate -10
    node -p "require('./package.json').name"
-   npm view "$(node -p "require('./package.json').name")" version dist-tags --json --registry=https://registry.npmjs.org/
+   npm view "$(node -p "require('./package.json').name")" versions dist-tags --json --registry=https://registry.npmjs.org/
    ```
 
 2. Require a clean worktree and local `main` synchronized with `origin/main`.
@@ -76,8 +81,11 @@ Trusted Publishing.
 
 3. Determine the version:
    - Use the version explicitly requested by the user.
-   - If no version was supplied, ask the user to choose the stable SemVer
-     version. Do not infer a major-version change.
+   - If no version was supplied, ask the user to choose a stable version or an
+     RC target version. Do not infer a major-version change.
+   - For an RC target `X.Y.Z`, use `X.Y.Z-rc.0` if no RC exists; otherwise
+     increment the highest published RC counter by one. Do not start an RC
+     series for an already-published stable target.
    - Confirm the version is greater than every published version and does not
      already exist on npm.
 
@@ -94,11 +102,12 @@ Trusted Publishing.
 
    ```sh
    pnpm check
-   npm publish --dry-run --registry=https://registry.npmjs.org/
+   npm publish --dry-run --tag <channel> --registry=https://registry.npmjs.org/
    ```
 
-   The dry run must show the expected name, version, entry points, files, and no
-   npm manifest auto-correction warnings.
+   Use `latest` as `<channel>` for stable versions and `rc` for RC versions. The
+   dry run must show the expected name, version, entry points, files, and no npm
+   manifest auto-correction warnings.
 
 7. Commit the version and related release changes using the repository's commit
    convention. Do not amend unless the user explicitly requests it.
@@ -140,7 +149,9 @@ npm view "<package-name>@<version>" name version dist-tags bin exports engines d
 
 Confirm that:
 
-- `latest` points to the released stable version;
+- for a stable release, `latest` points to the released version;
+- for an RC release, `rc` points to the released version and `latest` is
+  unchanged from before the release;
 - entry points and binaries match `package.json`;
 - a package-specific import or CLI smoke test succeeds;
 - the GitHub Actions run succeeded;
@@ -161,5 +172,6 @@ manual configuration. Do not claim success from the workflow alone.
   create a new version. Never move the pushed tag.
 - Failure after a tag push: inspect the run first. If npm already has the
   version, verify it rather than retrying. If it does not, fix the cause and
-  release a new patch version; do not reuse the failed tag.
+  release a new patch version or increment the RC counter, skipping any counter
+  whose tag was already pushed; do not reuse the failed tag.
 - Never delete a remote release tag without explicit user approval.

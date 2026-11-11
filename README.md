@@ -91,6 +91,13 @@ configuration out of the published tarball.
 
 ## Publish with npm Trusted Publishing
 
+Stable releases use `X.Y.Z` and the `latest` npm channel. Prereleases use only
+the `rc` channel and the version format `X.Y.Z-rc.n`, where `n` is a
+non-negative integer without leading zeros. For each target `X.Y.Z`, start at
+`X.Y.Z-rc.0` and increment the counter by one for each subsequent RC, for
+example `1.2.3-rc.0`, `1.2.3-rc.1`, then `1.2.3`. Do not start an RC series for
+an already-published stable target. RC releases never change `latest`.
+
 The publish workflow runs for `v*` tags. Before the first release:
 
 1. Create an `npm` environment in the derived GitHub repository.
@@ -116,7 +123,7 @@ The publish workflow runs for `v*` tags. Before the first release:
 6. Commit the release version to `main`.
 7. Wait for that exact commit's `main` push CI, including **Release verification
    (v1)**, to succeed.
-8. Create and push the matching tag, for example `v0.1.0`.
+8. Create and push the matching tag, for example `v0.1.0` or `v0.1.0-rc.0`.
 
 The workflow verifies that the tag matches `package.json`, that the commit is
 reachable from `main`, and that the version is not already on npm. It reuses the
@@ -136,9 +143,10 @@ summary. There is no repository-local copy of the verifier.
 
 Publishing installs locked dependencies, builds once through `prepack`, checks
 the resulting tarball with publint, and publishes that same tarball using
-short-lived OIDC credentials. It does not repeat the complete `pnpm check`. The
-release summary records the source SHA, CI run URL, run attempt, and
-verification contract.
+short-lived OIDC credentials, selecting `latest` for stable versions and `rc`
+for RC versions. It does not repeat the complete `pnpm check`. The release
+summary records the source SHA, CI run URL, run attempt, and verification
+contract.
 
 If publication is blocked before publishing because CI has not succeeded yet,
 wait for the matching CI and retry the failed release workflow without moving

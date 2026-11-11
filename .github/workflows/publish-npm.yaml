@@ -52,7 +52,7 @@ jobs:
           node --input-type=commonjs <<'NODE'
           const { appendFileSync } = require("node:fs");
           const packageJson = require("./package.json");
-          const stableVersion = /^\d+\.\d+\.\d+$/u;
+          const releaseVersion = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-rc\.(0|[1-9]\d*))?$/u;
           const expectedTag = `v${packageJson.version}`;
 
           if (packageJson.private === true) {
@@ -69,9 +69,9 @@ jobs:
             process.exit(1);
           }
 
-          if (!stableVersion.test(packageJson.version)) {
+          if (!releaseVersion.test(packageJson.version)) {
             console.error(
-              `::error::Publishing accepts stable SemVer versions only; received ${packageJson.version}.`,
+              `::error::Publishing accepts X.Y.Z or X.Y.Z-rc.n (n is a non-negative integer without leading zeros); received ${packageJson.version}.`,
             );
             process.exit(1);
           }
@@ -88,7 +88,7 @@ jobs:
 
           appendFileSync(
             process.env.GITHUB_OUTPUT,
-            `name=${packageJson.name}\nversion=${packageJson.version}\n`,
+            `name=${packageJson.name}\nversion=${packageJson.version}\nchannel=${packageJson.version.includes("-rc.") ? "rc" : "latest"}\n`,
           );
           NODE
 
@@ -140,9 +140,12 @@ jobs:
 
       - name: Publish package
         if: github.event_name == 'push'
+        env:
+          RELEASE_CHANNEL: ${{ steps.release.outputs.channel }}
         run:
-          npm publish "$PACKAGE_TARBALL" --access public --tag latest
-          --registry=https://registry.npmjs.org/ --loglevel=verbose
+          npm publish "$PACKAGE_TARBALL" --access public --tag
+          "$RELEASE_CHANNEL" --registry=https://registry.npmjs.org/
+          --loglevel=verbose
 
       - name: Validate trusted publishing
         if: github.event_name == 'workflow_dispatch'
